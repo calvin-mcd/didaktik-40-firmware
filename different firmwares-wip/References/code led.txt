@@ -1,0 +1,31 @@
+#if defined(ACTIVITY_LED_ENABLE)
+bool activity = false;
+uint16_t activity_timer = 0;
+
+bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
+    if (process_record_user(keycode, record)) {
+        return false;
+    } else {
+        // If activity is detected...
+        if (record->event.pressed) {
+            // ...turn the LED on only if it isn't on already
+            if (!activity) {
+                activity = true;
+                writePinHigh(D5);
+            }
+            // ...and (re)start the timer.
+            activity_timer = timer_read();
+        }
+    }
+    return true;
+}
+
+void matrix_scan_kb(void) {
+    // If we're still 'active' but it's been longer than 20ms...
+    if (activity && activity_timer > 20) {
+        // ...turn the LED off.
+        writePinLow(D5); 
+        activity = false;
+    }
+}
+#endif
